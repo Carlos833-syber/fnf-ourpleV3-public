@@ -1,29 +1,29 @@
-name: Build Ourple Guy Android
+name: Build Android APK
 
 on:
-  workflow_dispatch:
   push:
     branches:
-      - main
+      - "**"
+  workflow_dispatch:
 
 jobs:
-  build-android:
-    runs-on: ubuntu-22.04
+  build:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
       - name: Setup Haxe
         uses: krdlab/setup-haxe@v1
         with:
-          haxe-version: '4.3.7'
+          haxe-version: "4.3.7"
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -35,45 +35,48 @@ jobs:
           sdkmanager "build-tools;35.0.0"
           sdkmanager "ndk;26.3.11579264"
 
-      - name: Configure Android environment
+      - name: Set Android environment
         run: |
-          echo "ANDROID_SDK=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/26.3.11579264" >> $GITHUB_ENV
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/26.3.11579264" >> $GITHUB_ENV
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "ANDROID_SDK=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/26.3.11579264" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/26.3.11579264" >> $GITHUB_ENV
 
-      - name: Setup Haxelib
+      - name: Install Haxelib dependencies
         run: |
-          haxelib setup ~/haxelib
-
-      - name: Install HMM
-        run: |
+          haxelib setup /home/runner/haxelib
+          haxelib install lime
           haxelib install hmm
-
-      - name: Install project dependencies
-        run: |
           haxelib run hmm install
 
       - name: Setup Lime Android
         run: |
           haxelib run lime setup android
 
-      - name: Check Android environment
+      - name: Fix hxcpp
         run: |
-          echo "ANDROID_SDK=$ANDROID_SDK"
-          echo "ANDROID_NDK_ROOT=$ANDROID_NDK_ROOT"
-          ls "$ANDROID_NDK_ROOT"
+          haxelib remove hxcpp || true
+          haxelib install hxcpp 4.3.2
+          haxelib set hxcpp 4.3.2
 
-      - name: Build APK
+      - name: Verify hxcpp
         run: |
-          haxelib run lime build android -release
+          echo "HXCPP:"
+          haxelib list | grep hxcpp || true
+
+      - name: Build Android APK
+        run: |
+          haxelib run lime build android -release -D MODS_ALLOWED -D LUA_ALLOWED
 
       - name: Find APK
         run: |
-          find . -type f -name "*.apk" -print
+          echo "APK files:"
+          find export -type f -name "*.apk" -print
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ourple-Guy-Android
-          path: "**/*.apk"
+          name: Vs-Ourple-Guy-V3-Android
+          path: |
+            export/**/*.apk
           if-no-files-found: error
