@@ -1,0 +1,56 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-android:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: '4.3.7'
+
+      - name: Install Haxe libraries
+        run: |
+          haxelib setup ~/haxelib
+          haxelib install lime
+          haxelib install hmm
+
+      - name: Install HMM dependencies
+        run: |
+          haxelib run hmm install
+
+      - name: Setup Lime Android
+        run: |
+          haxelib run lime setup android
+
+      - name: Build Android
+        run: |
+          haxelib run lime build android -release
+
+      - name: Find APK
+        run: |
+          find . -type f -name "*.apk" -print
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ourple-Guy-Android
+          path: |
+            **/*.apk
+          if-no-files-found: error
