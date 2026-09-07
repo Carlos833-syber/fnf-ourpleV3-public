@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Ourple Guy Android
 
 on:
   workflow_dispatch:
@@ -25,13 +25,31 @@ jobs:
         with:
           haxe-version: '4.3.7'
 
-      - name: Install Haxe libraries
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: |
+          sdkmanager "platform-tools"
+          sdkmanager "platforms;android-35"
+          sdkmanager "build-tools;35.0.0"
+          sdkmanager "ndk;26.3.11579264"
+
+      - name: Configure Android environment
+        run: |
+          echo "ANDROID_SDK=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/26.3.11579264" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/26.3.11579264" >> $GITHUB_ENV
+
+      - name: Setup Haxelib
         run: |
           haxelib setup ~/haxelib
-          haxelib install lime
+
+      - name: Install HMM
+        run: |
           haxelib install hmm
 
-      - name: Install HMM dependencies
+      - name: Install project dependencies
         run: |
           haxelib run hmm install
 
@@ -39,7 +57,13 @@ jobs:
         run: |
           haxelib run lime setup android
 
-      - name: Build Android
+      - name: Check Android environment
+        run: |
+          echo "ANDROID_SDK=$ANDROID_SDK"
+          echo "ANDROID_NDK_ROOT=$ANDROID_NDK_ROOT"
+          ls "$ANDROID_NDK_ROOT"
+
+      - name: Build APK
         run: |
           haxelib run lime build android -release
 
@@ -51,6 +75,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Ourple-Guy-Android
-          path: |
-            **/*.apk
+          path: "**/*.apk"
           if-no-files-found: error
