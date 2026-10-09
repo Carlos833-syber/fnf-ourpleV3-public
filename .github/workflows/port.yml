@@ -63,6 +63,16 @@ jobs:
           haxelib run lime setup
           haxelib list | tee haxelib-list.log
 
+      - name: Detectar libs Android do port
+        run: |
+          if grep -q '"AndroidTools"' hmm.json; then
+            echo "PORT_FLAGS=-DANDROID_PORT_LIBS" >> "$GITHUB_ENV"
+            echo "Libs Android do port encontradas no hmm.json: flag ligada."
+          else
+            echo "PORT_FLAGS=" >> "$GITHUB_ENV"
+            echo "AndroidTools nao esta no hmm.json: build sem as libs do port (o APK ainda vai fechar ao abrir)."
+          fi
+
       - name: Configurar Lime para Android
         run: |
           haxelib run lime config ANDROID_SDK "$ANDROID_HOME"
@@ -73,12 +83,12 @@ jobs:
       - name: Compilar APK debug
         run: |
           set -o pipefail
-          haxelib run lime build android -debug --no-verbose 2>&1 | tee build-debug.log
+          haxelib run lime build android -debug $PORT_FLAGS 2>&1 | tee build-debug.log
 
       - name: Compilar APK release
         run: |
           set -o pipefail
-          haxelib run lime build android -release --no-verbose 2>&1 | tee build-release.log
+          haxelib run lime build android -release $PORT_FLAGS 2>&1 | tee build-release.log
 
       - name: Listar APKs gerados
         if: always()
