@@ -78,9 +78,13 @@
 
 	<define name="MODS_ALLOWED" />
 
-	<!-- [ANDROID] Lua no Android exige o linc_luajit compativel (o do port).      -->
-	<!-- Se o APK voltar a fechar ao abrir, volte para if="desktop" para isolar.   -->
-	<define name="LUA_ALLOWED" if="desktop || android" />
+	<!-- [ANDROID] ANDROID_PORT_LIBS e uma flag passada pelo workflow (-DANDROID_PORT_LIBS). -->
+	<!-- Ela so liga quando o hmm.json tem as libs Android do port (AndroidTools).          -->
+	<!-- Sem ela, o build Android nao pede nenhuma lib que nao esteja instalada.            -->
+
+	<!-- Lua no Android exige o linc_luajit compativel (o do port). -->
+	<define name="LUA_ALLOWED" if="desktop" />
+	<define name="LUA_ALLOWED" if="android ANDROID_PORT_LIBS" />
 
 	<!-- [TESTE] Videos seguem desligados no Android na primeira build.            -->
 	<!-- Depois que abrir, troque pela linha comentada abaixo.                     -->
@@ -215,10 +219,11 @@
 		if="VIDEOS_ALLOWED"
 	/>
 
-	<!-- [ANDROID] Nomes conforme o port 0.6.x. Confira no Project.xml do port   -->
-	<!-- que voce escolher e copie as mesmas entradas no hmm.json.               -->
-	<haxelib name="AndroidTools" if="android" />
-	<haxelib name="extension-webview" if="android" />
+	<!-- [ANDROID] So entram no build quando a flag ANDROID_PORT_LIBS esta ligada,   -->
+	<!-- ou seja, depois que voce copiar as entradas do hmm.json do port escolhido.  -->
+	<!-- Confira os nomes no Project.xml do port; ajuste aqui se forem diferentes.   -->
+	<haxelib name="AndroidTools" if="android ANDROID_PORT_LIBS" />
+	<haxelib name="extension-webview" if="android ANDROID_PORT_LIBS" />
 
 	<haxelib
 		name="faxe"
