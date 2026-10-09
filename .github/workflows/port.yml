@@ -32,7 +32,7 @@ jobs:
         env:
           ANDROID_HOME: ${{ runner.temp }}/android-sdk
 
-      - name: 📦 Baixar e instalar NDK r21e (recomendado pelo Lime)
+      - name: 📦 Baixar e instalar NDK r21e
         run: |
           ANDROID_HOME=${{ runner.temp }}/android-sdk
           NDK_VERSION="21.4.7075529"
@@ -52,12 +52,11 @@ jobs:
           haxe-version: '4.3.6'
 
       - name: 📦 Instalar dependências do projeto (hmm)
-        env:
-          ANDROID_HOME: ${{ runner.temp }}/android-sdk
         run: |
           haxelib --global install hmm
           haxelib --global run hmm setup
           hmm install
+          haxelib install lime
           haxelib run lime setup
 
       - name: 🔨 Compilar APK
@@ -65,7 +64,7 @@ jobs:
           ANDROID_HOME: ${{ runner.temp }}/android-sdk
           ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_ROOT }}
         run: |
-          lime build android -release --no-verbose
+          haxelib run lime build android -release --no-verbose
           ls -lh export/android/bin/app-release.apk
 
       - name: 📤 Salvar APK como download
