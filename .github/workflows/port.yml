@@ -1,123 +1,64 @@
-name: Build Android APK
+name: Build Ourple V3 Android APK
 
 on:
   push:
-    branches:
-      - "**"
-  workflow_dispatch:
+    branches: [ main ]
+  workflow_dispatch:  # Permite build manual pela interface
 
 jobs:
   build:
+    name: Compilar Ourple V3 para Android
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
-      - name: Checkout
+      - name: 📥 Pegar código do repositório
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      - name: Setup Java 17
+      - name: ☕ Instalar JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: "17"
+          java-version: '17'
+          distribution: 'temurin'
 
-      - name: Setup Haxe
-        uses: krdlab/setup-haxe@v1
-        with:
-          haxe-version: "4.3.7"
-
-      - name: Setup Android SDK
+      - name: 📱 Instalar Android SDK & NDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: >-
+            build-tools;34.0.0
+            platforms;android-34
+            ndk;26.2.12288908
+        env:
+          ANDROID_HOME: ${{ runner.temp }}/android-sdk
 
-      - name: Install Android SDK and NDK
+      - name: ⚡ Instalar Haxe 4.3.6
+        uses: krdlab/setup-haxe@v2
+        with:
+          haxe-version: '4.3.6'
+
+      - name: 📦 Instalar dependências do projeto (hmm)
+        env:
+          ANDROID_HOME: ${{ runner.temp }}/android-sdk
+          ANDROID_NDK_ROOT: ${{ runner.temp }}/android-sdk/ndk/26.2.12288908
         run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager "platform-tools"
-          sdkmanager "platforms;android-34"
-          sdkmanager "build-tools;34.0.0"
-          sdkmanager "ndk;21.4.7075529"
+          haxelib --global install hmm
+          haxelib --global run hmm setup
+          hmm install
+          haxelib run lime setup
 
-      - name: Set Android environment
+      - name: 🔨 Compilar APK
+        env:
+          ANDROID_HOME: ${{ runner.temp }}/android-sdk
+          ANDROID_NDK_ROOT: ${{ runner.temp }}/android-sdk/ndk/26.2.12288908
         run: |
-          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
-          echo "ANDROID_SDK=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
-          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/21.4.7075529" >> "$GITHUB_ENV"
-          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.4.7075529" >> "$GITHUB_ENV"
+          lime build android -release --no-verbose
+          ls -lh export/android/bin/app-release.apk
 
-      - name: Setup Haxelib
-        run: |
-          haxelib setup /home/runner/haxelib
-
-      - name: Install Lime
-        run: |
-          haxelib install lime
-          haxelib set lime latest
-
-      - name: Install HMM
-        run: |
-          haxelib install hmm
-
-      - name: Install project dependencies
-        run: |
-          haxelib run hmm install
-
-      - name: Fix hxcpp
-        run: |
-          haxelib remove hxcpp || true
-          haxelib install hxcpp 4.3.2
-          haxelib set hxcpp 4.3.2
-
-      - name: Setup Lime Android
-        run: |
-          haxelib run lime setup android
-
-      - name: Verify Haxe libraries
-        run: |
-          echo "===== HAXELIB ====="
-          haxelib list
-          echo "==================="
-
-      - name: Verify Android environment
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK=$ANDROID_SDK"
-          echo "ANDROID_NDK_ROOT=$ANDROID_NDK_ROOT"
-          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME"
-
-          echo "===== NDK ====="
-          test -f "$ANDROID_NDK_ROOT/source.properties"
-          cat "$ANDROID_NDK_ROOT/source.properties"
-
-          echo "===== SDK ====="
-          sdkmanager --list_installed | grep -E "platforms;android-34|build-tools;34.0.0|ndk;21.4.7075529" || true
-
-      - name: Build Android APK
-        run: |
-          haxelib run lime build android -release -D MODS_ALLOWED -D LUA_ALLOWED
-
-      - name: Find APK
-        run: |
-          echo "===== APK FILES ====="
-          find . -type f -name "*.apk" -print
-
-      - name: Check APK
-        run: |
-          APK=$(find . -type f -name "*.apk" | head -n 1)
-
-          if [ -z "$APK" ]; then
-            echo "ERRO: nenhum APK foi encontrado."
-            exit 1
-          fi
-
-          echo "APK encontrado:"
-          echo "$APK"
-
-          echo "Tamanho:"
-          ls -lh "$APK"
-
-      - name: Upload APK
+      - name: 📤 Salvar APK como download
         uses: actions/upload-artifact@v4
         with:
-          name: Vs-Ourple-Guy-V3-Android
-          path: |
-            export/**/*.apk
-            export/**/*.apk
+          name: OurpleV3-Android-APK
+          path: export/android/bin/app-release.apk
+          retention-days: 30
