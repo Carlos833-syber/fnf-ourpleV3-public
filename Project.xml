@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project>
 
+	<!-- Project.xml ajustado para Android (base: Psych Engine 0.6.x). -->
+	<!-- Marcas: [ANDROID] = mudanca para Android | [TESTE] = ligar so depois que o APK abrir -->
+
 	<!-- _________________________ Application Settings _________________________ -->
 
+	<!-- [ANDROID] Package proprio: evita conflito com outros apps baseados em Psych Engine -->
 	<app
 		title="Vs. Ourple Guy V3"
 		file="VsOurpleGuy"
-		packageName="com.shadowmario.psychengine"
-		package="com.shadowmario.psychengine"
+		packageName="com.ourpleco.ourplev3"
+		package="com.ourpleco.ourplev3"
 		main="Main"
 		version="0.2.8"
 		company="OurpleCo"
@@ -43,12 +47,13 @@
 		vsync="false"
 	/>
 
+	<!-- [ANDROID] 0.6.x usa 1280x720 no mobile (0x0 e padrao do 0.7+) -->
 	<window
 		if="mobile"
 		orientation="landscape"
 		fullscreen="true"
-		width="0"
-		height="0"
+		width="1280"
+		height="720"
 		resizable="false"
 	/>
 
@@ -71,22 +76,16 @@
 
 	<!-- __________________________ Psych Engine Customization __________________ -->
 
-	<!-- Mods habilitados -->
 	<define name="MODS_ALLOWED" />
 
-	<!--
-		Lua desativado temporariamente no Android.
-		Isso serve para testar se o fechamento imediato
-		do APK está relacionado ao LuaJIT.
-	-->
-	<define name="LUA_ALLOWED" if="desktop" />
+	<!-- [ANDROID] Lua no Android exige o linc_luajit compativel (o do port).      -->
+	<!-- Se o APK voltar a fechar ao abrir, volte para if="desktop" para isolar.   -->
+	<define name="LUA_ALLOWED" if="desktop || android" />
 
-	<!--
-		Vídeos desativados temporariamente no Android.
-		Isso serve para testar se o hxCodec está causando
-		o fechamento durante a inicialização.
-	-->
+	<!-- [TESTE] Videos seguem desligados no Android na primeira build.            -->
+	<!-- Depois que abrir, troque pela linha comentada abaixo.                     -->
 	<define name="VIDEOS_ALLOWED" if="desktop" />
+	<!-- <define name="VIDEOS_ALLOWED" if="desktop || android" unless="32bits" /> -->
 
 	<define name="CRASH_HANDLER" if="desktop release" />
 
@@ -107,9 +106,7 @@
 	/>
 
 	<library name="videos" preload="true" />
-
 	<library name="songs" preload="false" />
-
 	<library name="shared" preload="false" />
 
 	<assets
@@ -151,15 +148,30 @@
 		library="shaders"
 	/>
 
+	<!-- [ANDROID] embed="true" coloca esses assets dentro do executavel nativo.   -->
+	<!-- Em celular isso pode estourar memoria/tamanho, entao la fica embed=false. -->
 	<assets
 		path="assets/ourplesecrets"
 		library="ourplesecrets"
 		embed="true"
+		if="desktop"
+	/>
+	<assets
+		path="assets/ourplesecrets"
+		library="ourplesecrets"
+		embed="false"
+		if="android"
 	/>
 
 	<assets
 		path="assets/shared/images/characters/secret"
 		embed="true"
+		if="desktop"
+	/>
+	<assets
+		path="assets/shared/images/characters/secret"
+		embed="false"
+		if="android"
 	/>
 
 	<assets
@@ -182,10 +194,13 @@
 	<!-- _______________________________ Libraries ______________________________ -->
 
 	<haxelib name="flixel" />
+
 	<haxedev set="webgl" />
 
 	<haxelib name="flixel-addons" />
+
 	<haxelib name="hscript" />
+
 	<define name="hscriptPos" />
 
 	<haxelib name="flixel-ui" />
@@ -199,6 +214,11 @@
 		name="hxCodec"
 		if="VIDEOS_ALLOWED"
 	/>
+
+	<!-- [ANDROID] Nomes conforme o port 0.6.x. Confira no Project.xml do port   -->
+	<!-- que voce escolher e copie as mesmas entradas no hmm.json.               -->
+	<haxelib name="AndroidTools" if="android" />
+	<haxelib name="extension-webview" if="android" />
 
 	<haxelib
 		name="faxe"
@@ -214,6 +234,10 @@
 		name="hxcpp-debug-server"
 		if="debug"
 	/>
+
+	<!-- [ANDROID] Permissoes de armazenamento (a pasta mods/ fica fora do APK) -->
+	<config:android permission="android.permission.READ_EXTERNAL_STORAGE" if="android" />
+	<config:android permission="android.permission.WRITE_EXTERNAL_STORAGE" if="android" />
 
 	<!-- ______________________________ Haxedefines _____________________________ -->
 
