@@ -80,15 +80,16 @@ jobs:
           haxelib run lime config JAVA_HOME "$JAVA_HOME"
           haxelib run lime config ANDROID_SETUP true
 
-      - name: Compilar APK debug
-        run: |
-          set -o pipefail
-          haxelib run lime build android -debug $PORT_FLAGS 2>&1 | tee build-debug.log
-
       - name: Compilar APK release
         run: |
           set -o pipefail
           haxelib run lime build android -release $PORT_FLAGS 2>&1 | tee build-release.log
+
+      - name: Compilar APK debug (opcional)
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          haxelib run lime build android -debug $PORT_FLAGS 2>&1 | tee build-debug.log
 
       - name: Listar APKs gerados
         if: always()
