@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project>
 
-	<!-- Project.xml ajustado para Android (base: Psych Engine 0.6.x). -->
-	<!-- Marcas: [ANDROID] = mudanca para Android | [TESTE] = ligar so depois que o APK abrir -->
+	<!-- Android uses the bundled assets and the Lua library declared in hmm.json. -->
 
 	<!-- _________________________ Application Settings _________________________ -->
 
@@ -74,17 +73,14 @@
 
 	<classpath name="source" />
 
+	<!-- Lime otherwise merges ARMv7 into its default Android architectures. -->
+	<architecture name="ARM64" exclude="ARMV7" if="android" />
+
 	<!-- __________________________ Psych Engine Customization __________________ -->
 
 	<define name="MODS_ALLOWED" />
 
-	<!-- [ANDROID] ANDROID_PORT_LIBS e uma flag passada pelo workflow (-DANDROID_PORT_LIBS). -->
-	<!-- Ela so liga quando o hmm.json tem as libs Android do port (AndroidTools).          -->
-	<!-- Sem ela, o build Android nao pede nenhuma lib que nao esteja instalada.            -->
-
-	<!-- Lua no Android exige o linc_luajit compativel (o do port). -->
-	<define name="LUA_ALLOWED" if="desktop" />
-	<define name="LUA_ALLOWED" if="android ANDROID_PORT_LIBS" />
+	<define name="LUA_ALLOWED" if="desktop || android" />
 
 	<!-- [TESTE] Videos seguem desligados no Android na primeira build.            -->
 	<!-- Depois que abrir, troque pela linha comentada abaixo.                     -->
@@ -190,7 +186,9 @@
 			path="example_mods"
 			rename="mods"
 			embed="false"
+			unless="android"
 		/>
+		<assets path="example_mods" rename="mods" embed="false" type="binary" exclude="*.mp3" if="android" />
 	</section>
 
 	<assets path="assets/fonts" />
@@ -219,11 +217,6 @@
 		if="VIDEOS_ALLOWED"
 	/>
 
-	<!-- [ANDROID] So entram no build quando a flag ANDROID_PORT_LIBS esta ligada,   -->
-	<!-- ou seja, depois que voce copiar as entradas do hmm.json do port escolhido.  -->
-	<!-- Confira os nomes no Project.xml do port; ajuste aqui se forem diferentes.   -->
-	<haxelib name="AndroidTools" if="android ANDROID_PORT_LIBS" />
-	<haxelib name="extension-webview" if="android ANDROID_PORT_LIBS" />
 
 	<haxelib
 		name="faxe"
@@ -240,9 +233,8 @@
 		if="debug"
 	/>
 
-	<!-- [ANDROID] Permissoes de armazenamento (a pasta mods/ fica fora do APK) -->
-	<config:android permission="android.permission.READ_EXTERNAL_STORAGE" if="android" />
-	<config:android permission="android.permission.WRITE_EXTERNAL_STORAGE" if="android" />
+	<!-- Scripts and bundled mods are copied to the app's private storage. -->
+	<config type="android" minimum-sdk-version="23" target-sdk-version="34" build-tools-version="34.0.0" if="android" />
 
 	<!-- ______________________________ Haxedefines _____________________________ -->
 
@@ -281,5 +273,3 @@
 	<icon path="art/iconOG.png" />
 
 </project>
-
-Co-authored-by: Claude <noreply@anthropic.com>
