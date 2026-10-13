@@ -85,6 +85,19 @@ jobs:
           set -o pipefail
           haxelib run lime build android -release $PORT_FLAGS 2>&1 | tee build-release.log
 
+      - name: Mostrar erros reais do build
+        if: failure()
+        run: |
+          echo "=== Erros que NAO sao 'has no field' (a causa costuma estar aqui) ==="
+          grep -n -v "has no field" build-release.log | head -n 60 || true
+          echo
+          echo "=== Linhas que citam PlayState.hx ou FunkinLua.hx ==="
+          grep -n -E "PlayState\.hx|FunkinLua\.hx" build-release.log | head -n 20 || true
+          echo
+          echo "=== Versoes instaladas (Haxe/libs) ==="
+          haxe --version
+          cat haxelib-list.log
+
       - name: Compilar APK debug (opcional)
         continue-on-error: true
         run: |
