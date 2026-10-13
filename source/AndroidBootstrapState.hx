@@ -43,7 +43,12 @@ class AndroidBootstrapState extends FlxState
 			FileSystem.createDirectory(storage);
 			Sys.setCwd(storage);
 			manifest = Json.parse(Assets.getText('assets/android-files.json'));
-			for (entry in manifest.files) validatePath(entry.path);
+			for (entry in manifest.files)
+			{
+				validatePath(entry.path);
+				if (!Reflect.hasField(entry, 'size') || entry.size < 0)
+					throw 'Outdated asset manifest. Update scripts/prepare_android_assets.py and rebuild the APK.';
+			}
 			if (FileSystem.exists(MARKER))
 			{
 				var old:AndroidManifest = Json.parse(File.getContent(MARKER));
@@ -91,7 +96,8 @@ class AndroidBootstrapState extends FlxState
 			while (position < manifest.files.length && haxe.Timer.stamp() - start < 0.01)
 			{
 				var entry = manifest.files[position];
-				var bytes = Assets.getBytes(entry.path);
+				// Lime returns null for zero-byte native files; they are valid mod metadata.
+				var bytes = entry.size == 0 ? lime.utils.Bytes.alloc(0) : Assets.getBytes(entry.path);
 				if (bytes == null) throw 'Missing APK asset: ' + entry.path;
 				FileSystem.createDirectory(Path.directory(entry.path));
 				File.saveBytes(entry.path + '.tmp', bytes);
@@ -120,6 +126,6 @@ class AndroidBootstrapState extends FlxState
 private typedef AndroidManifest =
 {
 	var version:String;
-	var files:Array<{path:String, sha256:String}>;
+	var files:Array<{path:String, size:Int, sha256:String}>;
 }
 #end
