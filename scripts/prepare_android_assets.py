@@ -18,7 +18,7 @@ def prepare(root: Path) -> dict:
             if path.name == "android-files.json":
                 continue
             destination = prefix + "/" + path.relative_to(root / folder).as_posix()
-            entries.append({"path": destination, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+            entries.append({"path": destination, "size": path.stat().st_size, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
     digest = hashlib.sha256(json.dumps(entries, sort_keys=True).encode()).hexdigest()
     return {"version": digest, "files": entries}
 
