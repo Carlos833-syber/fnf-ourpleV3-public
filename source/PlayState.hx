@@ -9,7 +9,9 @@ import flixel.addons.display.FlxBackdrop;
 import PauseSubState.PauseChars;
 import flixel.system.FlxAssets.FlxShader;
 import Stage.MosiacShader;
+#if VIDEOS_ALLOWED
 import hxcodec.VideoSprite;
+#end
 import flixel.graphics.FlxGraphic;
 #if desktop
 import Discord.DiscordClient;
@@ -360,7 +362,9 @@ class PlayState extends MusicBeatState
 	public var pixelHUD:FlxSpriteGroup;
 	public var hudAssets:FlxSpriteGroup;
 
+	#if VIDEOS_ALLOWED
 	public var midSongVideo:VideoSprite;
+	#end
 
 	//event stuff can be paused yahoo!
 	public var eventTweens:FlxTweenManager = new FlxTweenManager();
@@ -533,9 +537,11 @@ class PlayState extends MusicBeatState
 		}
 		SONG.stage = curStage;
 
+		#if VIDEOS_ALLOWED
 		midSongVideo = new VideoSprite();
 		add(midSongVideo);
 		midSongVideo.cameras = [camVideo];
+		#end
 
 		var stageData:StageFile = StageData.getStageFile(curStage);
 		if(stageData == null) { //Stage couldn't be found, create a dummy stage for preventing a crash
@@ -1397,9 +1403,13 @@ class PlayState extends MusicBeatState
 
 	public function playVideo(video:String)
 	{
+		#if VIDEOS_ALLOWED
 		midSongVideo.playVideo(Paths.video(video));
 		midSongVideo.canvasHeight = FlxG.height;
 		midSongVideo.canvasWidth = FlxG.width+5;
+		#else
+		onVideoEnded();
+		#end
 	}
 
 	public function updateHUD():Void
@@ -1671,7 +1681,9 @@ class PlayState extends MusicBeatState
 				camGame.flash();
 			case 'lurking':
 				camGame.visible = true;
+				#if VIDEOS_ALLOWED
 				midSongVideo.visible = false;
+				#end
 				stars.visible = true;
 				hudAssets.visible = true;
 				iconP1.visible = true;
@@ -2872,10 +2884,12 @@ class PlayState extends MusicBeatState
 			eventTimers.active = false;
 
 			
+			#if VIDEOS_ALLOWED
 			if (midSongVideo != null && midSongVideo.bitmap.isPlaying) {
 				midSongVideo.bitmap.pause();
 				pausedmidSongVideo = true;
 			}
+			#end
 
 			if (startTimer != null && !startTimer.finished)
 				startTimer.active = false;
@@ -2917,10 +2931,12 @@ class PlayState extends MusicBeatState
 				resyncVocals();
 			}
 
+			#if VIDEOS_ALLOWED
 			if (midSongVideo != null && pausedmidSongVideo) {
 				midSongVideo.bitmap.resume();
 				pausedmidSongVideo = false;
 			}
+			#end
 
 			if (startTimer != null && !startTimer.finished)
 				startTimer.active = true;
@@ -3755,8 +3771,10 @@ class PlayState extends MusicBeatState
 			case 'PlayVideoSprite':
 				if (value1 == 'lurking' && !ClientPrefs.flashing) return;
 				playVideo(value1);
+				#if VIDEOS_ALLOWED
 				midSongVideo.finishCallback = onVideoEnded;
 				midSongVideo.openingCallback = onVideoStarted;
+				#end
 			case 'followedFlicker' | 'toggleCamVisible':
 				if (eventName == 'followedFlicker' && !ClientPrefs.flashing) return; 
 				camGame.visible = !camGame.visible;
@@ -5223,11 +5241,16 @@ class PlayState extends MusicBeatState
 	public var strumsBlocked:Array<Bool> = [];
 	private function onKeyPress(event:KeyboardEvent):Void
 	{
+		handleKeyPress(event);
+	}
+
+	private function handleKeyPress(event:KeyboardEvent, fromTouch:Bool = false):Void
+	{
 		var eventKey:FlxKey = event.keyCode;
 		var key:Int = getKeyFromEvent(eventKey);
 		//trace('Pressed: ' + eventKey);
 
-		if (!cpuControlled && startedCountdown && !paused && key > -1 && (FlxG.keys.checkStatus(eventKey, JUST_PRESSED) || ClientPrefs.controllerMode))
+		if (!cpuControlled && startedCountdown && !paused && key > -1 && (FlxG.keys.checkStatus(eventKey, JUST_PRESSED) || ClientPrefs.controllerMode || fromTouch))
 		{
 			if(!boyfriend.stunned && generatedMusic && !endingSong)
 			{
@@ -5357,6 +5380,16 @@ class PlayState extends MusicBeatState
 		// HOLDING
 		var parsedHoldArray:Array<Bool> = parseKeys();
 
+		#if android
+		for (i in 0...controlArray.length)
+		{
+			if (MobileControls.check(controlArray[i] + '-press') && strumsBlocked[i] != true)
+				handleKeyPress(new KeyboardEvent(KeyboardEvent.KEY_DOWN, true, true, -1, keysArray[i][0]), true);
+			if (MobileControls.check(controlArray[i] + '-release'))
+				onKeyRelease(new KeyboardEvent(KeyboardEvent.KEY_UP, true, true, -1, keysArray[i][0]));
+		}
+		#end
+
 		// TO DO: Find a better way to handle controller inputs, this should work for now
 		if(ClientPrefs.controllerMode)
 		{
@@ -5365,7 +5398,7 @@ class PlayState extends MusicBeatState
 			{
 				for (i in 0...parsedArray.length)
 				{
-					if(parsedArray[i] && strumsBlocked[i] != true)
+					if(parsedArray[i] && strumsBlocked[i] != true #if android && !MobileControls.check(controlArray[i] + '-press') #end)
 						onKeyPress(new KeyboardEvent(KeyboardEvent.KEY_DOWN, true, true, -1, keysArray[i][0]));
 				}
 			}
@@ -6453,6 +6486,7 @@ class PlayState extends MusicBeatState
 
 
 		public function preloadvideo(video:String) {
+			#if VIDEOS_ALLOWED
 			var vid = new VideoSprite();
 			vid.playVideo(Paths.video(video));
 			vid.graphicLoadedCallback = function () {
@@ -6462,5 +6496,6 @@ class PlayState extends MusicBeatState
 			vid.finishCallback = function () {
 				vid = null;
 			}
+			#end
 		}
 }

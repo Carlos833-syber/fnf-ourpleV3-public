@@ -164,6 +164,8 @@ class CoolUtil
 
 		if(FileSystem.exists(path)) {
 			path = File.getContent(path);
+		} else if (openfl.utils.Assets.exists(path, TEXT)) {
+			path = openfl.utils.Assets.getText(path);
 		}
 		return path;
 	}

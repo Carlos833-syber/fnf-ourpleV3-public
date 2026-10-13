@@ -378,7 +378,7 @@ class FreeplayStateFollowed extends MusicBeatState
 
 			var accepted = controls.ACCEPT;
 			var space = FlxG.keys.justPressed.SPACE;
-			var ctrl = FlxG.keys.justPressed.CONTROL;
+			var ctrl = FlxG.keys.justPressed.CONTROL #if android || MobileControls.check("options-press") #end;
 
 			var shiftMult:Int = 1;
 			if (FlxG.keys.pressed.SHIFT)

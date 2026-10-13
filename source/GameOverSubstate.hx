@@ -1,7 +1,8 @@
 package;
 
-import hxcodec.VideoSprite;
+#if VIDEOS_ALLOWED
 import hxcodec.VideoHandler;
+#end
 import flixel.FlxG;
 import flixel.FlxObject;
 import flixel.FlxSubState;
@@ -20,7 +21,9 @@ class GameOverSubstate extends MusicBeatSubstate
 	var updateCamera:Bool = false;
 	var playingDeathSound:Bool = false;
 	var playVideo:Bool = false;
+	#if VIDEOS_ALLOWED
 	var videosprite:VideoHandler;
+	#end
 
 	var stageSuffix:String = "";
 
@@ -55,7 +58,7 @@ class GameOverSubstate extends MusicBeatSubstate
 
 		Conductor.songPosition = 0;
 
-		playVideo = (PlayState.SONG.song == 'followed');
+		playVideo = #if VIDEOS_ALLOWED (PlayState.SONG.song == 'followed') #else false #end;
 
 		boyfriend = new Boyfriend(x, y, characterName);
 		boyfriend.x += boyfriend.positionArray[0];
@@ -79,6 +82,7 @@ class GameOverSubstate extends MusicBeatSubstate
 			case 'fear':
 				boyfriend.visible = false;
 				FlxG.sound.play(Paths.sound('feardie' + FlxG.random.int(1,4)));
+			#if VIDEOS_ALLOWED
 			case 'followed':
 				videosprite = new VideoHandler();
 				videosprite.playVideo(Paths.video("FollowedGameover"));
@@ -87,6 +91,7 @@ class GameOverSubstate extends MusicBeatSubstate
 					endBullshit();
 				}
 
+			#end
 			default:
 		}
 
@@ -108,19 +113,23 @@ class GameOverSubstate extends MusicBeatSubstate
 
 		if (controls.ACCEPT && (!playVideo || seenVideoOnce))
 		{
+			#if VIDEOS_ALLOWED
 			if (videosprite != null)  {
 				videosprite.stop();
 				videosprite.dispose();
 			}
+			#end
 			endBullshit();
 		}
 
 		if (controls.BACK)
 		{
+			#if VIDEOS_ALLOWED
 			if (videosprite != null)  {
 				videosprite.stop();
 				videosprite.dispose();
 			}
+			#end
 
 			FlxG.sound.music.stop();
 			PlayState.deathCounter = 0;
