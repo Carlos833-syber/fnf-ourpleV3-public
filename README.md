@@ -12,3 +12,7 @@ Co-authored-by: Claude <noreply@anthropic.com>
 
 
 Please note this repo has not and will not be further maintained. There are many bugs and issues and I apologize for that. Otherwise, have fun!
+
+## Android
+
+Para compilar pelo GitHub Actions e usar os controles de toque, veja [o guia Android](docs/ANDROID.md).
