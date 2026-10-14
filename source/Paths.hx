@@ -384,11 +384,18 @@ class Paths
 		}
 		#end
 		// I hate this so god damn much
-		var gottenPath:String = getPath('$path/$key.$SOUND_EXT', SOUND, library);
-		gottenPath = gottenPath.substring(gottenPath.indexOf(':') + 1, gottenPath.length);
+		var assetPath:String = getPath('$path/$key.$SOUND_EXT', SOUND, library);
+		#if android
+		if (path == 'songs' && library == null)
+			assetPath = getLibraryPath('$key.$SOUND_EXT', 'songs');
+		#end
+		var gottenPath:String = assetPath.substring(assetPath.indexOf(':') + 1, assetPath.length);
 		// trace(gottenPath);
 		if(!currentTrackedSounds.exists(gottenPath))
-		#if MODS_ALLOWED
+		#if android
+			// APK resources must use their registered IDs, including named libraries.
+			currentTrackedSounds.set(gottenPath, OpenFlAssets.getSound(assetPath));
+		#elseif MODS_ALLOWED
 			currentTrackedSounds.set(gottenPath, Sound.fromFile('./' + gottenPath));
 		#else
 		{
