@@ -25,3 +25,11 @@ git apply /caminho/ourple-android.patch
 ```
 
 Revise as mudancas e publique pelo seu fluxo normal. O patch inclui a remocao do workflow invalido.
+
+## Tudo em um único pacote
+
+Este ZIP reúne as correções de arquivos vazios, áudio, controles, hitbox e botões Psych Mobile, imagem 16:9, vídeos Android e telas de carregamento. Use este pacote atualizado para substituir os arquivos dos pacotes anteriores.
+
+Envie TODO o conteúdo extraído, incluindo source/AndroidVideoHandler.hx, Project.xml, scripts/prepare_android_assets.py, assets/ e .github/. Mantenha os arquivos originais do mod no repositório: os vídeos e as imagens de loading existentes não são duplicados no ZIP de atualização. Faça o commit antes de iniciar uma NOVA execução do workflow.
+
+O pacote é uma atualização do código-fonte, não um APK. O APK completo é grande e deve ser baixado pelos Artifacts do Actions. Durante as cutscenes, A pula. Vídeo, som, loading e retorno ao jogo ainda precisam ser testados no aparelho.

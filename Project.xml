@@ -84,7 +84,8 @@
 
 	<!-- [TESTE] Videos seguem desligados no Android na primeira build.            -->
 	<!-- Depois que abrir, troque pela linha comentada abaixo.                     -->
-	<define name="VIDEOS_ALLOWED" if="desktop" />
+	<define name="VIDEOS_ALLOWED" if="desktop || android" />
+	<define name="NO_PRELOAD_ALL" if="android" />
 	<!-- <define name="VIDEOS_ALLOWED" if="desktop || android" unless="32bits" /> -->
 
 	<define name="CRASH_HANDLER" if="desktop release" />
@@ -105,7 +106,8 @@
 		unless="web"
 	/>
 
-	<library name="videos" preload="true" />
+	<library name="videos" preload="true" unless="android" />
+	<library name="videos" preload="false" if="android" />
 	<library name="songs" preload="false" />
 	<library name="shared" preload="false" />
 
