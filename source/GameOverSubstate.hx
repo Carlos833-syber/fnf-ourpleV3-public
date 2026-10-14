@@ -104,7 +104,8 @@ class GameOverSubstate extends MusicBeatSubstate
 		add(camFollowPos);
 	}
 
-	#if android
+	// [ANDROID] Corrigido: antes era so "#if android", mas videosprite so existe com VIDEOS_ALLOWED
+	#if (VIDEOS_ALLOWED && android)
 	override function destroy():Void
 	{
 		if (videosprite != null) videosprite.cancel();
