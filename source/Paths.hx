@@ -195,10 +195,14 @@ class Paths
 		#if MODS_ALLOWED
 		var file:String = modsVideo(key);
 		if(FileSystem.exists(file)) {
-			return file;
+			return #if android FileSystem.fullPath(file) #else file #end;
 		}
 		#end
+		#if android
+		return FileSystem.fullPath('assets/videos/$key.$VIDEO_EXT');
+		#else
 		return 'assets/videos/$key.$VIDEO_EXT';
+		#end
 	}
 
 	static public function sound(key:String, ?library:String):Sound

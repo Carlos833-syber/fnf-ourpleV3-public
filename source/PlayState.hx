@@ -87,7 +87,8 @@ import sys.io.File;
 #end
 
 #if VIDEOS_ALLOWED
-#if (hxCodec >= "2.6.1") import hxcodec.VideoHandler as MP4Handler;
+#if android import AndroidVideoHandler as MP4Handler;
+#elseif (hxCodec >= "2.6.1") import hxcodec.VideoHandler as MP4Handler;
 #elseif (hxCodec == "2.6.0") import VideoHandler as MP4Handler;
 #else import vlc.MP4Handler; #end
 #end
@@ -364,6 +365,9 @@ class PlayState extends MusicBeatState
 
 	#if VIDEOS_ALLOWED
 	public var midSongVideo:VideoSprite;
+	#if android
+	var activeCutscene:AndroidVideoHandler;
+	#end
 	#end
 
 	//event stuff can be paused yahoo!
@@ -1404,6 +1408,19 @@ class PlayState extends MusicBeatState
 	public function playVideo(video:String)
 	{
 		#if VIDEOS_ALLOWED
+		#if android
+		// hxCodec disposes a finished decoder; use a fresh sprite for each video.
+		if (midSongVideo != null)
+		{
+			AndroidVideoHandler.closeSprite(midSongVideo.bitmap);
+			remove(midSongVideo, true);
+			midSongVideo.destroy();
+		}
+		midSongVideo = new VideoSprite();
+		midSongVideo.bitmap.canSkip = false;
+		midSongVideo.cameras = [camVideo];
+		add(midSongVideo);
+		#end
 		midSongVideo.playVideo(Paths.video(video));
 		midSongVideo.canvasHeight = FlxG.height;
 		midSongVideo.canvasWidth = FlxG.width+5;
@@ -1715,20 +1732,28 @@ class PlayState extends MusicBeatState
 		#end
 		{
 			FlxG.log.warn('Couldnt find video file: ' + name);
+			camGame.visible = true;
+			camHUD.visible = true;
 			startAndEnd();
 			return;
 		}
 
 		var video:MP4Handler = new MP4Handler();
 		video.skipKeys = [FlxKey.SPACE,FlxKey.ENTER];
-		video.playVideo(filepath);
 		video.finishCallback = function()
 		{
 			camGame.visible = true;
 			camHUD.visible = true;
+			#if android
+			activeCutscene = null;
+			#end
 			startAndEnd();
 			return;
 		}
+		#if android
+		activeCutscene = video;
+		#end
+		video.playVideo(filepath);
 		#else
 		FlxG.log.warn('Platform not supported!');
 		startAndEnd();
@@ -5948,6 +5973,13 @@ class PlayState extends MusicBeatState
 	}
 
 	override function destroy() {
+		#if android
+		if (activeCutscene != null) activeCutscene.cancel();
+		if (midSongVideo != null)
+		{
+			AndroidVideoHandler.closeSprite(midSongVideo.bitmap);
+		}
+		#end
 		for (lua in luaArray) {
 			lua.call('onDestroy', []);
 			lua.stop();
@@ -6491,7 +6523,7 @@ class PlayState extends MusicBeatState
 
 
 		public function preloadvideo(video:String) {
-			#if VIDEOS_ALLOWED
+			#if (VIDEOS_ALLOWED && !android)
 			var vid = new VideoSprite();
 			vid.playVideo(Paths.video(video));
 			vid.graphicLoadedCallback = function () {

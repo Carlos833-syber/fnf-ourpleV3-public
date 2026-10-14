@@ -1,7 +1,11 @@
 package;
 
 #if VIDEOS_ALLOWED
+#if android
+import AndroidVideoHandler as VideoHandler;
+#else
 import hxcodec.VideoHandler;
+#end
 #end
 import flixel.FlxG;
 import flixel.FlxObject;
@@ -85,11 +89,11 @@ class GameOverSubstate extends MusicBeatSubstate
 			#if VIDEOS_ALLOWED
 			case 'followed':
 				videosprite = new VideoHandler();
-				videosprite.playVideo(Paths.video("FollowedGameover"));
 				videosprite.finishCallback = function () {
 					seenVideoOnce = true;
 					endBullshit();
 				}
+				videosprite.playVideo(Paths.video("FollowedGameover"));
 
 			#end
 			default:
@@ -99,6 +103,14 @@ class GameOverSubstate extends MusicBeatSubstate
 		camFollowPos.setPosition(FlxG.camera.scroll.x + (FlxG.camera.width / 2), FlxG.camera.scroll.y + (FlxG.camera.height / 2));
 		add(camFollowPos);
 	}
+
+	#if android
+	override function destroy():Void
+	{
+		if (videosprite != null) videosprite.cancel();
+		super.destroy();
+	}
+	#end
 
 	var isFollowingAlready:Bool = false;
 	override function update(elapsed:Float)
@@ -115,8 +127,12 @@ class GameOverSubstate extends MusicBeatSubstate
 		{
 			#if VIDEOS_ALLOWED
 			if (videosprite != null)  {
+				#if android
+				videosprite.cancel();
+				#else
 				videosprite.stop();
 				videosprite.dispose();
+				#end
 			}
 			#end
 			endBullshit();
@@ -126,8 +142,12 @@ class GameOverSubstate extends MusicBeatSubstate
 		{
 			#if VIDEOS_ALLOWED
 			if (videosprite != null)  {
+				#if android
+				videosprite.cancel();
+				#else
 				videosprite.stop();
 				videosprite.dispose();
+				#end
 			}
 			#end
 

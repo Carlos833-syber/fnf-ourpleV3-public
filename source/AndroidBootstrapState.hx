@@ -30,7 +30,7 @@ class AndroidBootstrapState extends FlxState
 		try
 		{
 			// Register native libraries without preloading their large images/audio into RAM.
-			for (name in ['songs', 'shared', 'shaders', 'ourplesecrets'])
+			for (name in ['songs', 'shared', 'shaders', 'ourplesecrets', 'videos'])
 			{
 				if (Assets.getLibrary(name) == null)
 				{
@@ -97,7 +97,7 @@ class AndroidBootstrapState extends FlxState
 			{
 				var entry = manifest.files[position];
 				// Lime returns null for zero-byte native files; they are valid mod metadata.
-				var bytes = entry.size == 0 ? lime.utils.Bytes.alloc(0) : Assets.getBytes(entry.path);
+				var bytes = entry.size == 0 ? lime.utils.Bytes.alloc(0) : Assets.getBytes(StringTools.startsWith(entry.path, 'assets/videos/') ? 'videos:' + entry.path : entry.path);
 				if (bytes == null) throw 'Missing APK asset: ' + entry.path;
 				FileSystem.createDirectory(Path.directory(entry.path));
 				File.saveBytes(entry.path + '.tmp', bytes);
