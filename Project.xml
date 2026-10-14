@@ -257,14 +257,17 @@
 		unless="debug"
 	/>
 
+	<!-- [ANDROID] Ligados tambem no Android: o erro mostra arquivo e linha, e    -->
+	<!-- acesso nulo vira excecao do Haxe (aparece na caixa) em vez de crash nativo. -->
+	<!-- Depois de achar o bug, pode voltar para if="CRASH_HANDLER" (custa desempenho). -->
 	<haxedef
 		name="HXCPP_CHECK_POINTER"
-		if="CRASH_HANDLER"
+		if="CRASH_HANDLER || android"
 	/>
 
 	<haxedef
 		name="HXCPP_STACK_LINE"
-		if="CRASH_HANDLER"
+		if="CRASH_HANDLER || android"
 	/>
 
 	<!-- _________________________________ Icons __________________________________ -->
