@@ -5972,8 +5972,8 @@ class PlayState extends MusicBeatState
 		}
 	}
 
-	override function destroy() {
-		#if android
+		override function destroy() {
+		#if (VIDEOS_ALLOWED && android)
 		if (activeCutscene != null) activeCutscene.cancel();
 		if (midSongVideo != null)
 		{
