@@ -7,6 +7,11 @@ import flixel.graphics.FlxGraphic;
 import Controls;
 
 class ClientPrefs {
+	#if android
+	public static var touchButtonHeight:Int = 150;
+	public static var touchButtonsTop:Bool = false;
+	public static var touchButtonOpacity:Float = 0.35;
+	#end
 	public static var followChars:Bool = true;
 	public static var downScroll:Bool = false;
 	public static var middleScroll:Bool = false;
@@ -96,6 +101,11 @@ class ClientPrefs {
 	}
 
 	public static function saveSettings() {
+		#if android
+		FlxG.save.data.touchButtonHeight = touchButtonHeight;
+		FlxG.save.data.touchButtonsTop = touchButtonsTop;
+		FlxG.save.data.touchButtonOpacity = touchButtonOpacity;
+		#end
 		FlxG.save.data.followChars = followChars;
 		FlxG.save.data.downScroll = downScroll;
 		FlxG.save.data.middleScroll = middleScroll;
@@ -146,6 +156,13 @@ class ClientPrefs {
 	}
 
 	public static function loadPrefs() {
+		#if android
+		if (FlxG.save.data.touchButtonHeight != null)
+			touchButtonHeight = Std.int(Math.max(80, Math.min(240, FlxG.save.data.touchButtonHeight)));
+		if (FlxG.save.data.touchButtonsTop != null) touchButtonsTop = FlxG.save.data.touchButtonsTop;
+		if (FlxG.save.data.touchButtonOpacity != null)
+			touchButtonOpacity = Math.max(0.1, Math.min(1, FlxG.save.data.touchButtonOpacity));
+		#end
 		if(FlxG.save.data.superfuckingHD != null) {
 			superfuckingHD = FlxG.save.data.superfuckingHD;
 		}

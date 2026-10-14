@@ -74,7 +74,7 @@ class MobileControls
 
 	public static function check(action:String):Bool
 	{
-		var parts = action.split('-');
+		var parts = action.toLowerCase().split('-');
 		var down = held.exists(parts[0]);
 		var wasDown = previous.exists(parts[0]);
 		return switch (parts[1])
@@ -94,7 +94,8 @@ class MobileControls
 		{
 			var buttonWidth = (width - 60) / 4;
 			for (i in 0...4)
-				add('note_' + directions[i], directions[i].toUpperCase(), 12 + i * (buttonWidth + 12), height - 162, buttonWidth, 150);
+				add('note_' + directions[i], directions[i].toUpperCase(), 12 + i * (buttonWidth + 12),
+					ClientPrefs.touchButtonsTop ? 104 : height - ClientPrefs.touchButtonHeight - 12, buttonWidth, ClientPrefs.touchButtonHeight);
 			add('pause', 'PAUSE', width - 172, 16, 156, 76);
 		}
 		else
@@ -122,7 +123,7 @@ class MobileControls
 		layer.scaleX = FlxG.scaleMode.scale.x;
 		layer.scaleY = FlxG.scaleMode.scale.y;
 		layer.visible = !Std.isOfType(FlxG.state, AndroidBootstrapState);
-		for (button in buttons) button.alpha = held.exists(button.action) ? 0.85 : 0.35;
+		for (button in buttons) button.alpha = held.exists(button.action) ? Math.min(1, ClientPrefs.touchButtonOpacity + 0.4) : ClientPrefs.touchButtonOpacity;
 	}
 }
 

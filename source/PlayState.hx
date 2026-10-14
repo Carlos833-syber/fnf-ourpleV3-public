@@ -5244,10 +5244,10 @@ class PlayState extends MusicBeatState
 		handleKeyPress(event);
 	}
 
-	private function handleKeyPress(event:KeyboardEvent, fromTouch:Bool = false):Void
+	private function handleKeyPress(event:KeyboardEvent, fromTouch:Bool = false, touchLane:Int = -1):Void
 	{
 		var eventKey:FlxKey = event.keyCode;
-		var key:Int = getKeyFromEvent(eventKey);
+		var key:Int = fromTouch ? touchLane : getKeyFromEvent(eventKey);
 		//trace('Pressed: ' + eventKey);
 
 		if (!cpuControlled && startedCountdown && !paused && key > -1 && (FlxG.keys.checkStatus(eventKey, JUST_PRESSED) || ClientPrefs.controllerMode || fromTouch))
@@ -5341,8 +5341,13 @@ class PlayState extends MusicBeatState
 
 	private function onKeyRelease(event:KeyboardEvent):Void
 	{
+		handleKeyRelease(event);
+	}
+
+	private function handleKeyRelease(event:KeyboardEvent, touchLane:Int = -1):Void
+	{
 		var eventKey:FlxKey = event.keyCode;
-		var key:Int = getKeyFromEvent(eventKey);
+		var key:Int = touchLane >= 0 ? touchLane : getKeyFromEvent(eventKey);
 		if(!cpuControlled && startedCountdown && !paused && key > -1)
 		{
 			var spr:StrumNote = playerStrums.members[key];
@@ -5384,9 +5389,9 @@ class PlayState extends MusicBeatState
 		for (i in 0...controlArray.length)
 		{
 			if (MobileControls.check(controlArray[i] + '-press') && strumsBlocked[i] != true)
-				handleKeyPress(new KeyboardEvent(KeyboardEvent.KEY_DOWN, true, true, -1, keysArray[i][0]), true);
+				handleKeyPress(new KeyboardEvent(KeyboardEvent.KEY_DOWN), true, i);
 			if (MobileControls.check(controlArray[i] + '-release'))
-				onKeyRelease(new KeyboardEvent(KeyboardEvent.KEY_UP, true, true, -1, keysArray[i][0]));
+				handleKeyRelease(new KeyboardEvent(KeyboardEvent.KEY_UP), i);
 		}
 		#end
 
@@ -5441,7 +5446,7 @@ class PlayState extends MusicBeatState
 			{
 				for (i in 0...parsedArray.length)
 				{
-					if(parsedArray[i] || strumsBlocked[i] == true)
+					if((parsedArray[i] || strumsBlocked[i] == true) #if android && !MobileControls.check(controlArray[i] + '-release') #end)
 						onKeyRelease(new KeyboardEvent(KeyboardEvent.KEY_UP, true, true, -1, keysArray[i][0]));
 				}
 			}
