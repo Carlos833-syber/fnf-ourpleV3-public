@@ -7,6 +7,12 @@ class MobileControlsSubState extends BaseOptionsMenu
  {
   title = 'Touch Controls';
   rpcTitle = 'Touch Controls';
+  addOption(new Option('Control Mode',
+   'Hitbox: four full-height touch lanes. Buttons: four arrow buttons.\nA confirms, B goes back, P pauses and C opens settings.',
+   'touchControlMode', 'string', 'Hitbox', ['Hitbox', 'Buttons']));
+  addOption(new Option('Hitbox Style',
+   'Choose the feedback shown when touching a lane. Hidden keeps the lanes invisible.',
+   'touchHitboxStyle', 'string', 'Gradient', ['Gradient', 'Outline', 'Hidden']));
   var option = new Option('Button Height',
    'Use LEFT/RIGHT to resize the four gameplay buttons.', 'touchButtonHeight', 'int', 150);
   option.minValue = 80;
