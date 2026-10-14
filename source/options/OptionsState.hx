@@ -49,7 +49,11 @@ class OptionsState extends MusicBeatState
 			case 'Note Colors':
 				openSubState(new options.NotesSubState());
 			case 'Controls':
+				#if android
+				openSubState(new options.MobileControlsSubState());
+				#else
 				openSubState(new options.ControlsSubState());
+				#end
 			case 'Graphics':
 				openSubState(new options.GraphicsSettingsSubState());
 			case 'Visuals and UI':
