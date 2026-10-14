@@ -45,6 +45,7 @@ class LoadingState extends MusicBeatState
 	var loadBar:FlxSprite;
 	override function create()
 	{
+		super.create();
 
 		var value = FlxG.random.int(1,34);
 		if (value != 34) {
@@ -140,14 +141,15 @@ class LoadingState extends MusicBeatState
 		MusicBeatState.switchState(target);
 	}
 	
-	static function getSongPath()
+	static function getSongPath():String
 	{
-		return Paths.inst(PlayState.SONG.song);
+		// Cache lookups need asset IDs, not the Sound returned by Paths.inst.
+		return 'songs:assets/songs/${Paths.formatToSongPath(PlayState.SONG.song)}/Inst.${Paths.SOUND_EXT}';
 	}
 	
-	static function getVocalPath()
+	static function getVocalPath():String
 	{
-		return Paths.voices(PlayState.SONG.song);
+		return 'songs:assets/songs/${Paths.formatToSongPath(PlayState.SONG.song)}/Voices.${Paths.SOUND_EXT}';
 	}
 	
 	inline static public function loadAndSwitchState(target:FlxState, stopMusic = false)
