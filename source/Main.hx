@@ -75,6 +75,9 @@ class Main extends Sprite
 
 	private function setupGame():Void
 	{
+		#if android
+		Lib.current.loaderInfo.uncaughtErrorEvents.addEventListener(openfl.events.UncaughtErrorEvent.UNCAUGHT_ERROR, onAndroidError);
+		#end
 		var stageWidth:Int = Lib.current.stage.stageWidth;
 		var stageHeight:Int = Lib.current.stage.stageHeight;
 
@@ -126,6 +129,25 @@ class Main extends Sprite
 		}
 		#end
 	}
+
+	#if android
+	var reportedError:Bool = false;
+	function onAndroidError(event:openfl.events.UncaughtErrorEvent):Void
+	{
+		event.preventDefault();
+		if (reportedError) return;
+		reportedError = true;
+		var detail = Std.string(event.error) + '\n' + haxe.CallStack.toString(haxe.CallStack.exceptionStack(true));
+		try
+		{
+			var storage = lime.system.System.applicationStorageDirectory;
+			sys.FileSystem.createDirectory(storage);
+			sys.io.File.saveContent(storage + '/last-error.txt', detail);
+		}
+		catch (ignored:Dynamic) {}
+		Application.current.window.alert(detail, 'Ourple V3 - erro');
+	}
+	#end
 
 	// Code was entirely made by sqirra-rng for their fnf engine named "Izzy Engine", big props to them!!!
 	// very cool person for real they don't get enough credit for their work

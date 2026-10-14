@@ -13,6 +13,8 @@ import openfl.geom.Matrix;
 import openfl.geom.Point;
 import openfl.geom.Rectangle;
 import openfl.utils.Assets;
+import openfl.text.TextField;
+import openfl.text.TextFormat;
 
 /** A camera-independent overlay; one action remains held while any finger holds it. */
 class MobileControls
@@ -49,6 +51,13 @@ class MobileControls
 
 	static function update():Void
 	{
+		// The bootstrap has its own screen; do not load overlay images during it.
+		if (Std.isOfType(FlxG.state, AndroidBootstrapState))
+		{
+			clear();
+			state = null;
+			return;
+		}
 		var nextPlaying = Std.isOfType(FlxG.state, PlayState) && FlxG.state.subState == null
 			&& !cast(FlxG.state, PlayState).inCutscene;
 		if (state != FlxG.state || substate != FlxG.state.subState || playing != nextPlaying
@@ -187,23 +196,51 @@ private class TouchButton extends Sprite
 			frames = frameCache.get(icon);
 			if (frames == null)
 			{
-				var sheet = Assets.getBitmapData('assets/images/mobile/' + icon + '.png');
-				var frameWidth = Std.int(sheet.width / 2);
-				frames = [];
-				for (i in 0...2)
+				var asset = 'assets/images/mobile/' + icon + '.png';
+				var sheet:BitmapData = null;
+				try
 				{
-					var frame = new BitmapData(frameWidth, sheet.height, true, 0);
-					frame.copyPixels(sheet, new Rectangle(i * frameWidth, 0, frameWidth, sheet.height), new Point());
-					frames.push(frame);
+					if (Assets.exists(asset)) sheet = Assets.getBitmapData(asset);
 				}
-				frameCache.set(icon, frames);
+				catch (error:Dynamic) trace('Unable to load touch button: ' + asset);
+				if (sheet != null && sheet.width >= 2 && sheet.width % 2 == 0 && sheet.height > 0)
+				{
+					var frameWidth = Std.int(sheet.width / 2);
+					frames = [];
+					for (i in 0...2)
+					{
+						var frame = new BitmapData(frameWidth, sheet.height, true, 0);
+						frame.copyPixels(sheet, new Rectangle(i * frameWidth, 0, frameWidth, sheet.height), new Point());
+						frames.push(frame);
+					}
+					frameCache.set(icon, frames);
+				}
 			}
-			bitmap = new Bitmap(frames[0]);
-			bitmap.width = width;
-			bitmap.height = height;
-			bitmap.smoothing = true;
-			bitmap.transform.colorTransform = new ColorTransform(((color >> 16) & 255) / 255, ((color >> 8) & 255) / 255, (color & 255) / 255);
-			addChild(bitmap);
+			if (frames != null)
+			{
+				bitmap = new Bitmap(frames[0]);
+				bitmap.width = width;
+				bitmap.height = height;
+				bitmap.smoothing = true;
+				bitmap.transform.colorTransform = new ColorTransform(((color >> 16) & 255) / 255, ((color >> 8) & 255) / 255, (color & 255) / 255);
+				addChild(bitmap);
+			}
+			else
+			{
+				// Keep menus usable even if a button sheet was omitted from the APK.
+				graphics.lineStyle(3, color);
+				graphics.beginFill(0x281D3D);
+				graphics.drawRoundRect(0, 0, width, height, 18, 18);
+				graphics.endFill();
+				var label = new TextField();
+				label.defaultTextFormat = new TextFormat('_sans', 32, 0xFFFFFF, true, null, null, null, null, 'center');
+				label.text = switch (icon) { case 'left': '<'; case 'right': '>'; case 'up': '^'; case 'down': 'v'; default: icon.toUpperCase(); };
+				label.width = width;
+				label.height = 44;
+				label.y = (height - 44) / 2;
+				label.selectable = false;
+				addChild(label);
+			}
 		}
 		updateVisual(false);
 	}
@@ -214,7 +251,7 @@ private class TouchButton extends Sprite
 			alpha = pressed && ClientPrefs.touchHitboxStyle != 'Hidden' ? ClientPrefs.touchButtonOpacity : 0;
 		else
 		{
-			bitmap.bitmapData = frames[pressed ? 1 : 0];
+			if (bitmap != null) bitmap.bitmapData = frames[pressed ? 1 : 0];
 			alpha = pressed ? Math.min(1, ClientPrefs.touchButtonOpacity + 0.4) : ClientPrefs.touchButtonOpacity;
 		}
 	}
