@@ -5,8 +5,14 @@ import flixel.FlxG;
 import flixel.FlxState;
 import flixel.FlxSubState;
 import openfl.display.Sprite;
-import openfl.text.TextField;
-import openfl.text.TextFormat;
+import openfl.display.Bitmap;
+import openfl.display.BitmapData;
+import openfl.display.GradientType;
+import openfl.geom.ColorTransform;
+import openfl.geom.Matrix;
+import openfl.geom.Point;
+import openfl.geom.Rectangle;
+import openfl.utils.Assets;
 
 /** A camera-independent overlay; one action remains held while any finger holds it. */
 class MobileControls
@@ -65,8 +71,14 @@ class MobileControls
 			if (!touch.pressed) continue;
 			activeTouches.set(touch.touchPointID, true);
 			if (ignoredTouches.exists(touch.touchPointID)) continue;
-			for (button in buttons)
-				if (button.containsPoint(touch.gameX, touch.gameY)) held.set(button.action, true);
+			// Later buttons (pause) take priority over an overlapping hitbox lane.
+			var i = buttons.length;
+			while (i-- > 0)
+				if (buttons[i].containsPoint(touch.gameX, touch.gameY))
+				{
+					held.set(buttons[i].action, true);
+					break;
+				}
 		}
 		for (id in ignoredTouches.keys())
 			if (!activeTouches.exists(id)) ignoredTouches.remove(id);
@@ -90,28 +102,40 @@ class MobileControls
 		layer.removeChildren();
 		buttons = [];
 		var directions = ['left', 'down', 'up', 'right'];
+		var colors = [0xC24B99, 0x00FFFF, 0x12FA05, 0xF9393F];
 		if (playing)
 		{
-			var buttonWidth = (width - 60) / 4;
-			for (i in 0...4)
-				add('note_' + directions[i], directions[i].toUpperCase(), 12 + i * (buttonWidth + 12),
-					ClientPrefs.touchButtonsTop ? 104 : height - ClientPrefs.touchButtonHeight - 12, buttonWidth, ClientPrefs.touchButtonHeight);
-			add('pause', 'PAUSE', width - 172, 16, 156, 76);
+			if (ClientPrefs.touchControlMode == 'Hitbox')
+			{
+				for (i in 0...4)
+					add('note_' + directions[i], directions[i], i * width / 4, 0, width / 4, height, colors[i], true);
+			}
+			else
+			{
+				var size = ClientPrefs.touchButtonHeight;
+				for (i in 0...4)
+					add('note_' + directions[i], directions[i], (i + 0.5) * width / 4 - size / 2,
+						ClientPrefs.touchButtonsTop ? 104 : height - size - 12, size, size, colors[i]);
+			}
+			add('pause', 'p', width - 92, 12, 80, 80, 0xFFFFFF);
 		}
 		else
 		{
-			for (i in 0...4)
-				add('ui_' + directions[i], directions[i].toUpperCase(), 12 + i * 122, height - 122, 110, 110);
-			add('accept', 'OK', width - 172, height - 122, 156, 110);
-			add('back', 'BACK', width - 172, height - 242, 156, 100);
+			// Psych-style D-pad with A/B action buttons.
+			add('ui_left', 'left', 12, height - 208, 96, 96, colors[0]);
+			add('ui_down', 'down', 112, height - 108, 96, 96, colors[1]);
+			add('ui_up', 'up', 112, height - 308, 96, 96, colors[2]);
+			add('ui_right', 'right', 212, height - 208, 96, 96, colors[3]);
+			add('accept', 'a', width - 116, height - 116, 104, 104, 0xFF0000);
+			add('back', 'b', width - 224, height - 220, 104, 104, 0xFFFF00);
 			if (Std.isOfType(state, FreeplayState) || Std.isOfType(state, FreeplayStateFollowed))
-				add('options', 'SETTINGS', width - 172, 16, 156, 76);
+				add('options', 'c', width - 104, 12, 92, 92, 0x00FFFF);
 		}
 	}
 
-	static function add(action:String, label:String, x:Float, y:Float, w:Float, h:Float):Void
+	static function add(action:String, icon:String, x:Float, y:Float, w:Float, h:Float, color:Int, hitbox:Bool = false):Void
 	{
-		var button = new TouchButton(action, label, x, y, w, h);
+		var button = new TouchButton(action, icon, x, y, w, h, color, hitbox);
 		buttons.push(button);
 		layer.addChild(button);
 	}
@@ -123,7 +147,7 @@ class MobileControls
 		layer.scaleX = FlxG.scaleMode.scale.x;
 		layer.scaleY = FlxG.scaleMode.scale.y;
 		layer.visible = !Std.isOfType(FlxG.state, AndroidBootstrapState);
-		for (button in buttons) button.alpha = held.exists(button.action) ? Math.min(1, ClientPrefs.touchButtonOpacity + 0.4) : ClientPrefs.touchButtonOpacity;
+		for (button in buttons) button.updateVisual(held.exists(button.action));
 	}
 }
 
@@ -132,27 +156,67 @@ private class TouchButton extends Sprite
 	public var action:String;
 	var buttonWidth:Float;
 	var buttonHeight:Float;
+	var hitbox:Bool;
+	var bitmap:Bitmap;
+	var frames:Array<BitmapData>;
+	static var frameCache:Map<String, Array<BitmapData>> = [];
 
-	public function new(action:String, label:String, x:Float, y:Float, width:Float, height:Float)
+	public function new(action:String, icon:String, x:Float, y:Float, width:Float, height:Float, color:Int, hitbox:Bool)
 	{
 		super();
 		this.action = action;
 		this.x = x;
 		this.y = y;
+		this.hitbox = hitbox;
 		buttonWidth = width;
 		buttonHeight = height;
-		graphics.lineStyle(3, 0xFFFFFF);
-		graphics.beginFill(0x281D3D);
-		graphics.drawRoundRect(0, 0, width, height, 18, 18);
-		graphics.endFill();
-		var text = new TextField();
-		text.defaultTextFormat = new TextFormat('_sans', 24, 0xFFFFFF, true, null, null, null, null, 'center');
-		text.text = label;
-		text.width = width;
-		text.height = 36;
-		text.y = (height - 36) / 2;
-		text.selectable = false;
-		addChild(text);
+		if (hitbox)
+		{
+			graphics.lineStyle(3, color);
+			if (ClientPrefs.touchHitboxStyle == 'Gradient')
+			{
+				var matrix = new Matrix();
+				matrix.createGradientBox(width, height);
+				graphics.beginGradientFill(GradientType.RADIAL, [color, color], [0, 0.7], [0, 255], matrix);
+			}
+			graphics.drawRect(2, 2, width - 4, height - 4);
+			graphics.endFill();
+		}
+		else
+		{
+			frames = frameCache.get(icon);
+			if (frames == null)
+			{
+				var sheet = Assets.getBitmapData('assets/images/mobile/' + icon + '.png');
+				var frameWidth = Std.int(sheet.width / 2);
+				frames = [];
+				for (i in 0...2)
+				{
+					var frame = new BitmapData(frameWidth, sheet.height, true, 0);
+					frame.copyPixels(sheet, new Rectangle(i * frameWidth, 0, frameWidth, sheet.height), new Point());
+					frames.push(frame);
+				}
+				frameCache.set(icon, frames);
+			}
+			bitmap = new Bitmap(frames[0]);
+			bitmap.width = width;
+			bitmap.height = height;
+			bitmap.smoothing = true;
+			bitmap.transform.colorTransform = new ColorTransform(((color >> 16) & 255) / 255, ((color >> 8) & 255) / 255, (color & 255) / 255);
+			addChild(bitmap);
+		}
+		updateVisual(false);
+	}
+
+	public function updateVisual(pressed:Bool):Void
+	{
+		if (hitbox)
+			alpha = pressed && ClientPrefs.touchHitboxStyle != 'Hidden' ? ClientPrefs.touchButtonOpacity : 0;
+		else
+		{
+			bitmap.bitmapData = frames[pressed ? 1 : 0];
+			alpha = pressed ? Math.min(1, ClientPrefs.touchButtonOpacity + 0.4) : ClientPrefs.touchButtonOpacity;
+		}
 	}
 
 	public function containsPoint(px:Float, py:Float):Bool

@@ -8,6 +8,8 @@ import Controls;
 
 class ClientPrefs {
 	#if android
+	public static var touchControlMode:String = 'Hitbox';
+	public static var touchHitboxStyle:String = 'Gradient';
 	public static var touchButtonHeight:Int = 150;
 	public static var touchButtonsTop:Bool = false;
 	public static var touchButtonOpacity:Float = 0.35;
@@ -102,6 +104,8 @@ class ClientPrefs {
 
 	public static function saveSettings() {
 		#if android
+		FlxG.save.data.touchControlMode = touchControlMode;
+		FlxG.save.data.touchHitboxStyle = touchHitboxStyle;
 		FlxG.save.data.touchButtonHeight = touchButtonHeight;
 		FlxG.save.data.touchButtonsTop = touchButtonsTop;
 		FlxG.save.data.touchButtonOpacity = touchButtonOpacity;
@@ -157,6 +161,10 @@ class ClientPrefs {
 
 	public static function loadPrefs() {
 		#if android
+		if (['Hitbox', 'Buttons'].contains(FlxG.save.data.touchControlMode))
+			touchControlMode = FlxG.save.data.touchControlMode;
+		if (['Gradient', 'Outline', 'Hidden'].contains(FlxG.save.data.touchHitboxStyle))
+			touchHitboxStyle = FlxG.save.data.touchHitboxStyle;
 		if (FlxG.save.data.touchButtonHeight != null)
 			touchButtonHeight = Std.int(Math.max(80, Math.min(240, FlxG.save.data.touchButtonHeight)));
 		if (FlxG.save.data.touchButtonsTop != null) touchButtonsTop = FlxG.save.data.touchButtonsTop;

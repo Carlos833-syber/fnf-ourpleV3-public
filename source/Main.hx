@@ -78,6 +78,7 @@ class Main extends Sprite
 		var stageWidth:Int = Lib.current.stage.stageWidth;
 		var stageHeight:Int = Lib.current.stage.stageHeight;
 
+		#if !android
 		if (game.zoom == -1.0)
 		{
 			var ratioX:Float = stageWidth / game.width;
@@ -87,10 +88,13 @@ class Main extends Sprite
 			game.height = Math.ceil(stageHeight / game.zoom);
 		}
 	
+		#end
 		ClientPrefs.loadDefaultKeys();
 		addChild(new FlxGame(game.width, game.height, game.initialState, #if (flixel < "5.0.0") game.zoom, #end game.framerate, game.framerate, game.skipSplash, game.startFullscreen));
 
 		#if android
+		// Keep the original 1280x720 canvas centered on wide phones.
+		FlxG.scaleMode = new flixel.system.scaleModes.RatioScaleMode(false);
 		MobileControls.install(this);
 		#end
 
